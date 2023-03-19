@@ -1,8 +1,13 @@
+const { join, resolve } = require("path");
+require("dotenv").config({
+  path: join(resolve(__dirname, "../.."), ".env"),
+});
+
 module.exports = {
   name: "default",
   server: process.env.DB_SERVER || "localhost",
-  database: process.env.DB_NAME || "default",
-  user: process.env.DB_USER || "root",
+  database: process.env.DB_DATABASE || "default",
+  user: process.env.DB_USERNAME || "root",
   password: process.env.DB_PASSWORD || "",
   port: parseInt(process.env.DB_PORT) || 1433,
   options: {
