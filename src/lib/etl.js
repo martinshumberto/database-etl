@@ -57,8 +57,8 @@ class ETL {
       });
   }
 
-  async processBatch(transformedData, destinationTable, mapColumns) {
-    const destinationColumns = Object.values(mapColumns).map(
+  async processBatch(transformedData) {
+    const destinationColumns = Object.values(this.mapColumns).map(
       (column) => column.destination
     );
     const destinationColumnsString = destinationColumns.join(",");
@@ -71,7 +71,7 @@ class ETL {
             const values = {};
             const recordPlaceholders = [];
 
-            for (const column of mapColumns) {
+            for (const column of this.mapColumns) {
               const value = record[column?.destination];
               if (value !== null && value !== undefined) {
                 recordPlaceholders.push(`@${column.destination}_${record.id}`);
@@ -96,9 +96,9 @@ class ETL {
             try {
               const placeholdersValuesString = placeholders.join(",");
               const destinationQuery = `
-                    SET IDENTITY_INSERT ${destinationTable} ON
-                    INSERT INTO ${destinationTable} (${destinationColumnsString}) VALUES ${placeholdersValuesString}
-                    SET IDENTITY_INSERT ${destinationTable} OFF
+                    SET IDENTITY_INSERT ${this.destinationTable} ON
+                    INSERT INTO ${this.destinationTable} (${destinationColumnsString}) VALUES ${placeholdersValuesString}
+                    SET IDENTITY_INSERT ${this.destinationTable} OFF
                 `;
 
               log.sql(`[INSERT] Query: ${destinationQuery}`);
@@ -111,7 +111,7 @@ class ETL {
             } catch (err) {
               if (err.message.includes("Violation of PRIMARY KEY constraint")) {
                 log.warn(
-                  `Record already exists in ${destinationTable} with ID: #${record.id}`
+                  `Record already exists in ${this.destinationTable} with ID: #${record.id}`
                 );
 
                 const primaryKeyColumn = "id"; // Get primary key column from destination table
@@ -132,7 +132,7 @@ class ETL {
                 }
 
                 const updateQuery = `
-                    UPDATE ${destinationTable} SET ${updateValues
+                    UPDATE ${this.destinationTable} SET ${updateValues
                   .map((item) => `${item.column} = ${item.placeholder}`)
                   .join(", ")}
                     WHERE ${primaryKeyColumn} = ${record[primaryKeyColumn]}
@@ -170,10 +170,10 @@ class ETL {
 
   async populateQueue() {
     const query = `
-        SELECT id
-        FROM ${this.sourceTable}
-        ORDER BY id ASC
-        `;
+    SELECT id
+    FROM ${this.sourceTable}
+    ORDER BY id ASC
+    `;
     log.sql(`[SELECT] Query: ${query}`);
 
     const data = await seriate
@@ -193,39 +193,69 @@ class ETL {
         log.info(
           `No new records to populate queue. Last record ID: ${lastRecordId}`
         );
-        return;
+        return Promise.resolve();
       }
     }
 
     const records = data.map((record) => record.id);
     const numRecords = records.length;
     const numClusters = this.clusterSize;
+    const queueBatchSize = this.batchSize;
 
-    const queue = [];
+    log.info(`Populating queue with ${numRecords} records`);
 
-    for (let i = 0; i < numRecords; i += this.batchSize) {
-      const startId = records[i];
-      const lastId = records[Math.min(i + this.batchSize - 1, numRecords - 1)];
+    while (records.length > 0) {
+      const queue = [];
 
-      const hash = fnv.hash(startId.toString(), 32).dec();
-      const clusterId = hash % numClusters;
+      for (
+        let batchIndex = 0;
+        batchIndex < Math.ceil(numRecords / queueBatchSize);
+        batchIndex++
+      ) {
+        const startIndex = batchIndex * queueBatchSize;
+        const endIndex = Math.min(startIndex + queueBatchSize, numRecords);
+        const startId = records[startIndex];
+        const lastId = records[endIndex - 1];
 
-      queue.push({
-        startId,
-        lastId,
-        clusterId,
+        const hash = fnv.hash(startId.toString(), 32).dec();
+        const clusterId = numClusters === 0 ? 0 : hash % numClusters;
+
+        queue.push({
+          startId,
+          lastId,
+          clusterId,
+        });
+      }
+
+      const promises = queue.map((item) => {
+        return this.queue
+          .addItem(item.startId, item.lastId, item.clusterId)
+          .catch((err) => {
+            log.error(`Processing stopped at function: populateQueue`);
+            throw err;
+          });
       });
+
+      await Promise.all(promises).catch((err) => {
+        log.error(`Processing stopped at function: populateQueue`);
+        console.log(err);
+        throw err;
+      });
+
+      if (records.length > queueBatchSize) {
+        log.info(
+          `Populated queue with ${queueBatchSize} records. ${records.length} records remaining`
+        );
+      }
+
+      if (records.length <= queueBatchSize) {
+        break;
+      }
+
+      records.splice(0, queueBatchSize);
     }
 
-    const promises = queue.map((item) => {
-      return this.queue.addItem(item.startId, item.lastId, item.clusterId);
-    });
-
-    return Promise.all(promises).catch((err) => {
-      log.error(`Processing stopped at function: populateQueue`);
-      console.log(err);
-      throw err;
-    });
+    Promise.resolve();
   }
 
   async handleProcess(queueItem) {
@@ -247,13 +277,7 @@ class ETL {
 
     if (transformedData.length > 0) {
       try {
-        await exponentialBackoff(() =>
-          this.processBatch(
-            transformedData,
-            this.destinationTable,
-            this.mapColumns
-          )
-        );
+        await exponentialBackoff(() => this.processBatch(transformedData));
         log.info(
           `Processed batch with last id ${queueItem.last_id} [${this.sourceTable}] successfully`
         );
@@ -277,6 +301,9 @@ class ETL {
 
     // Populate queue with records to process on Cluster Master
     if (this.clusterId === 0) {
+      log.info(
+        `Populating queue for [${this.sourceTable}] to [${this.destinationTable}]`
+      );
       await this.populateQueue();
       log.info(
         `Queue populated finished for [${this.sourceTable}] to [${this.destinationTable}]`
