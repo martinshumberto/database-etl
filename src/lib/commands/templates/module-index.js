@@ -1,4 +1,4 @@
-const ETL = require("src/lib/etl");
+const ETL = require("../../lib/etl");
 
 const sourceTable = "sourceTableOnDatabase";
 const destinationTable = "destinationTableOnDatabase";
