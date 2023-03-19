@@ -4,13 +4,11 @@ require("dotenv").config();
 // Package
 const ETLConfig = require("./src/config/etl");
 const log = require("./src/lib/log");
-const { initRedis } = require("./src/lib/redis");
 const { initDatabase } = require("./src/lib/db");
 
 (async function main() {
   try {
     await initDatabase();
-    await initRedis();
 
     const modules = ETLConfig.modules;
 
@@ -22,7 +20,7 @@ const { initDatabase } = require("./src/lib/db");
 
     // Run ETL process for each module
     for (let i = 0; i < modules.length; i++) {
-      const module = require(`./src/modules/${modules[i]}/index.js`);
+      const module = require(`./src/modules/${modules[i]}`);
 
       await module
         .ETL()
