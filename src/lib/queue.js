@@ -42,7 +42,7 @@ class Queue {
       batchSize: this.batchSize,
       startId,
       lastId,
-      clusterId,
+      clusterId: clusterId || 0,
     };
 
     log.sql(`[INSERT] Query: ${query}`);
@@ -73,7 +73,7 @@ class Queue {
     const params = {
       sourceTable: this.sourceTable,
       destinationTable: this.destinationTable,
-      clusterId: this.clusterId,
+      clusterId: this.clusterId || 0,
     };
 
     log.sql(`[SELECT] Query: ${query}`);
