@@ -9,7 +9,7 @@ const TEMPLATE_PATH = path.join(
   ROOT_PATH,
   "src",
   "lib",
-  "modules",
+  "commands",
   "templates",
   "module-index.js"
 );
