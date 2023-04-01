@@ -134,6 +134,7 @@ To run this project, you will need to add the following environment variables to
 - Change commands from node to bash
 - Add tests
 - Add typescript
+- Transform the tool into a library
 
 ## Contributing
 
