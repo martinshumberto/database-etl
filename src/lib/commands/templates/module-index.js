@@ -32,8 +32,6 @@ const etlInit = new ETL(
 );
 
 module.exports = {
-  sourceTable,
-  destinationTable,
   start: async () => await etlInit.start(),
   populate: async () => await etlInit.populate(),
 };
