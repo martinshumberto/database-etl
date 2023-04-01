@@ -130,7 +130,7 @@ To run this project, you will need to add the following environment variables to
 ## 💡 Future improvement ideas
 
 - Extract from transaction and save records with error in batch processing, for later and isolated processing
-- Add support to other databases with ORM (mysql, postgres, mongodb)
+- Add support to other databases (with ORM ?) (mysql, postgres, mongodb)
 - Add connection to multiple databases
 - Change commands from node to bash (https://github.com/google/zx)
 - Add tests
