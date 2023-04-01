@@ -121,14 +121,14 @@ These are the commands currently supported by the tool
 To run this project, you will need to add the following environment variables to your .env file
 
 
-`DB_SERVER` - Host
-`DB_PORT` - Port (default: 1433)
-`DB_DATABASE` - Database name
-`DB_USERNAME` - Database username
-`DB_PASSWORD` - Database password
-`CLUSTER_SIZE` - How many clusters to run in production (default: 0)
-`ETL_BATCH_SIZE` - How many records per batch to process
-`ETL_MODULES` - The variable will be used to define the modules to be processed and used in commands. String with the name of the folders in `src/modules` within the modules separated by a comma (eg. "module1,module2,module3").
+- `DB_SERVER` - Host
+- `DB_PORT` - Port (default: 1433)
+- `DB_DATABASE` - Database name
+- `DB_USERNAME` - Database username
+- `DB_PASSWORD` - Database password
+- `CLUSTER_SIZE` - How many clusters to run in production (default: 0)
+- `ETL_BATCH_SIZE` - How many records per batch to process
+- `ETL_MODULES` - The variable will be used to define the modules to be processed and used in commands. String with the name of the folders in `src/modules` within the modules separated by a comma (eg. "module1,module2,module3").
 
 ## 💡 Future improvement ideas
 
