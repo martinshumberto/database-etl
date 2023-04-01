@@ -135,6 +135,7 @@ To run this project, you will need to add the following environment variables to
 - Add tests
 - Add typescript
 - Transform the tool into a library
+- UI
 
 ## Contributing
 
