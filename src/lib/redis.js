@@ -7,8 +7,7 @@ const log = require("./log");
 let clientRedis;
 
 const initRedis = () => {
-  // eslint-disable-next-line no-async-promise-executor
-  return new Promise(async (resolve, reject) => {
+  return new Promise((resolve, reject) => {
     log.info("Initializing Redis connection");
 
     clientRedis = redis.createClient({

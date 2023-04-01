@@ -18,21 +18,42 @@ const { initDatabase } = require("./src/lib/db");
       process.exit(0);
     }
 
-    // Run ETL process for each module
-    for (let i = 0; i < modules.length; i++) {
-      const module = require(`./src/modules/${modules[i]}`);
-
-      await module
-        .ETL()
-        .then(() => {
-          log.info(`Finished ETL process for module: ${modules[i]}`);
+    // Populate queue for each module on Cluster Master
+    if (ETLConfig.clusterId === 0) {
+      log.info(
+        `Populating queue for modules with cluster ${ETLConfig.clusterId}`
+      );
+      await Promise.allSettled(
+        modules.map(async (module) => {
+          try {
+            const mod = require(`./src/modules/${module}`);
+            await mod.populate();
+            return Promise.resolve();
+          } catch (err) {
+            log.error(`Error running ETL process for module: ${module}`);
+            log.error(err);
+            return Promise.reject(err);
+          }
         })
-        .catch((err) => {
-          log.error(`Error running ETL process for module: ${modules[i]}`);
-          log.error(err);
-          throw err;
-        });
+      );
+      log.info(`Releasing cluster #${ETLConfig.clusterId} for processing`);
     }
+
+    // Start process for each module
+    await Promise.allSettled(
+      modules.map(async (module) => {
+        try {
+          const mod = require(`./src/modules/${module}`);
+          await mod.start();
+          log.info(`Finished ETL process for module: ${module}`);
+          return Promise.resolve();
+        } catch (err) {
+          log.error(`Error running ETL process for module: ${module}`);
+          log.error(err);
+          return Promise.reject(err);
+        }
+      })
+    );
     process.exit(0);
   } catch (err) {
     log.error("Error running ETL process");

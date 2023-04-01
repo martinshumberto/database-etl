@@ -10,6 +10,7 @@ module.exports = {
   user: process.env.DB_USERNAME || "root",
   password: process.env.DB_PASSWORD || "",
   port: parseInt(process.env.DB_PORT) || 1433,
+  requestTimeout: 300000,
   options: {
     textsize: 2147483647,
     outFormat: "json",

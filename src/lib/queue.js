@@ -87,7 +87,6 @@ class Queue {
       return result[0];
     } catch (err) {
       log.error(`Processing stopped at function: getItem`);
-      console.log(err);
       throw err;
     }
   }
@@ -119,7 +118,6 @@ class Queue {
       });
     } catch (err) {
       log.error(`Processing stopped at function: updateStatus`);
-      console.log(err);
       throw err;
     }
   }
@@ -157,24 +155,30 @@ class Queue {
     log.info(
       `Processing queue [${this.sourceTable}] to [${this.destinationTable}]`
     );
-    // Process queue
+
     let queueItem = await this.getItem();
+
     while (queueItem) {
-      try {
-        // Update status to running
-        await this.updateStatus(queueItem.id, "RUNNING");
-        // Process item
-        await this.handleProcess(queueItem);
-        // Update status to completed
-        await this.updateStatus(queueItem.id, "COMPLETED");
-      } catch (err) {
-        log.error(
-          `Error processing range id: ${queueItem.start_id} - ${queueItem.last_id}`
-        );
-        // Update status to failed
-        await this.updateStatus(queueItem.id, "FAILED", err.message);
-      }
-      // Get next item
+      await this.updateStatus(queueItem.id, "RUNNING");
+
+      await this.handleProcess(queueItem)
+        .then(async () => {
+          log.info(
+            `Processed successfully range: [${this.sourceTable}] ${queueItem.start_id} - ${queueItem.last_id}`
+          );
+          await this.updateStatus(queueItem.id, "COMPLETED");
+        })
+        .catch(async (err) => {
+          log.error(
+            `Failed processing range: [${this.sourceTable}] ${queueItem.start_id} - ${queueItem.last_id}`
+          );
+
+          const errorMessage =
+            err?.message?.substring(0, 255) ?? "Unknown error";
+
+          await this.updateStatus(queueItem.id, "FAILED", errorMessage);
+        });
+
       queueItem = await this.getItem();
     }
   }

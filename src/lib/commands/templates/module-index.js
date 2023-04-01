@@ -17,16 +17,16 @@ async function transformData(data) {
   return transformedData;
 }
 
+const etlInit = new ETL(
+  sourceTable,
+  destinationTable,
+  mapColumns,
+  transformData
+);
+
 module.exports = {
   sourceTable,
   destinationTable,
-  ETL: async function () {
-    const etlInit = new ETL(
-      sourceTable,
-      destinationTable,
-      mapColumns,
-      transformData
-    );
-    return await etlInit.start();
-  },
+  start: async () => await etlInit.start(),
+  populate: async () => await etlInit.populate(),
 };

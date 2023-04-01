@@ -18,39 +18,35 @@ const MODULES = ETLConfig.modules;
     seriate.on("connected", async () => {
       console.log("\x1b[32m%s\x1b[0m", "[RESET STATE] DB Connected", "\x1b[0m");
 
-      const sourceTables = [];
-      const destinationTables = [];
       for (let i = 0; i < MODULES.length; i++) {
         const module = require(`../../modules/${MODULES[i]}`);
-        sourceTables.push(module.sourceTable);
-        destinationTables.push(module.destinationTable);
-      }
+        const sourceTable = module.sourceTable;
+        const destinationTable = module.destinationTable;
 
-      console.log(
-        "\x1b[32m%s\x1b[0m",
-        `[RESET STATE] Truncating tables: ${destinationTables.join(",")}`,
-        "\x1b[0m"
-      );
-      const truncateQuery = `
-        DELETE FROM ${destinationTables.map((t) => t).join(", ")}
+        console.log(
+          "\x1b[32m%s\x1b[0m",
+          `[RESET STATE] Truncating table: ${destinationTable}`,
+          "\x1b[0m"
+        );
+        const truncateQuery = `
+        DELETE FROM ${destinationTable}
       `;
-      await seriate.execute({ query: truncateQuery });
+        await seriate.execute({ query: truncateQuery });
 
-      console.log(
-        "\x1b[32m%s\x1b[0m",
-        `[RESET STATE] Deleting from etl_queue: ${sourceTables.join(",")}`,
-        "\x1b[0m"
-      );
+        console.log(
+          "\x1b[32m%s\x1b[0m",
+          `[RESET STATE] Deleting from etl_queue sourceTable: ${sourceTable} and destinationTable: ${destinationTable}`,
+          "\x1b[0m"
+        );
 
-      // Delete from etl_queue
-      const ETLLogProcessing = `
-        DELETE FROM etl_queue
-        WHERE source_table IN (${sourceTables.map((t) => `'${t}'`).join(", ")})
-        AND destination_table IN (${destinationTables
-          .map((t) => `'${t}'`)
-          .join(", ")})
+        // Delete from etl_queue
+        const ETLLogProcessing = `
+          DELETE FROM etl_queue
+          WHERE source_table = '${sourceTable}'
+          AND destination_table = '${destinationTable}'
         `;
-      await seriate.execute({ query: ETLLogProcessing });
+        await seriate.execute({ query: ETLLogProcessing });
+      }
 
       console.log(
         "\x1b[32m%s\x1b[0m",
