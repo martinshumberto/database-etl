@@ -2,3 +2,4 @@ node_modules
 logs/*
 src/modules/*
 .env
+.DS_Store
