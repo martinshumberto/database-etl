@@ -92,10 +92,7 @@ CLUSTER_SIZE=4
 npm run / yarn start:prod
 ```
 
-
-
-
-### Available commands
+## Available commands
 
 These are the commands currently supported by the tool
 
