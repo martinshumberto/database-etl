@@ -8,12 +8,19 @@ const mapColumns = [
 ];
 
 async function transformData(data) {
-  const transformedData = data.map((record) => {
-    return {
+  const transformedData = [];
+
+  for (let i = 0; i < data.length; i++) {
+    const record = data[i];
+
+    // TODO: Add logic to transform data
+
+    transformedData.push({
       id: record.id,
-      // TODO: Add logic to transform data
-    };
-  });
+      // TODO: More columns
+    });
+  }
+
   return transformedData;
 }
 
