@@ -129,9 +129,9 @@ To run this project, you will need to add the following environment variables to
 
 ## 💡 Future improvement ideas
 
-- Add support to other databases
-- Connect to multiple databases
-- Change commands from node to bash
+- Add support to other databases (mysql, postgres, mongodb)
+- Add connection to multiple databases
+- Change commands from node to bash (https://github.com/google/zx)
 - Add tests
 - Add typescript
 - Transform the tool into a library
